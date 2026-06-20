@@ -110,10 +110,10 @@ export default function Notes() {
       <section className="relative mx-auto w-full max-w-6xl px-5 pb-4 pt-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <h1 className="text-4xl font-black leading-tight sm:text-5xl">
-            Notes <span className="text-cyan-300">&amp; PDF</span> <span className="bg-gradient-to-r from-cyan-300 to-violet-500 bg-clip-text text-transparent">Library</span>
+            Tech <span className="text-cyan-300">Resources</span>
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-300">
-            Download high-quality programming guides, quick cheat sheets and project source code.
+            Discover developer-focused resources crafted to help you master modern technologies faster
           </p>
         </div>
       </section>
