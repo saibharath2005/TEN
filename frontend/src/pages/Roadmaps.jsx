@@ -107,7 +107,7 @@ export default function Roadmaps() {
             Developer <span className="bg-gradient-to-r from-cyan-300 via-blue-400 to-violet-500 bg-clip-text text-transparent">Roadmaps</span>
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
-            Follow curated learning paths to achieve your career goals in technology.
+            Roadmaps for tomorrow's innovators, built to accelerate growth and mastery.
           </p>
         </div>
       </section>
