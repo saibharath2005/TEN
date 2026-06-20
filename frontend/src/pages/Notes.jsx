@@ -1,122 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../hooks/useAuth.js';
+import { navigate } from '../hooks/useRoute.js';
 import { useApiCollection } from '../hooks/useApiCollection.js';
+import { useSavedContent } from '../hooks/useSavedContent.js';
 
-const fallbackNotes = [
-  {
-    _id: 'java-oop',
-    title: 'Java OOP Notes',
-    category: 'java',
-    type: 'PDF',
-    language: 'Java',
-    description: 'Comprehensive guide to OOP concepts in Java with examples.',
-    pages: 28,
-    downloads: '12K',
-    icon: 'code',
-    updated: '2026',
-    topics: ['Classes', 'Inheritance', 'Interfaces', 'Polymorphism'],
-  },
-  {
-    _id: 'sql-joins',
-    title: 'SQL Joins Cheat Sheet',
-    category: 'sql',
-    type: 'Cheat Sheet',
-    language: 'SQL',
-    description: 'Quick reference for SQL joins with examples and use cases.',
-    pages: 12,
-    downloads: '9.8K',
-    icon: 'database',
-    updated: '2026',
-    topics: ['Inner Join', 'Left Join', 'Self Join', 'Cross Join'],
-  },
-  {
-    _id: 'collections',
-    title: 'Java Collections Notes',
-    category: 'java',
-    type: 'Notes',
-    language: 'Java',
-    description: 'Detailed notes on Java collection framework and hierarchy.',
-    pages: 34,
-    downloads: '8.2K',
-    icon: 'network',
-    updated: '2026',
-    topics: ['List', 'Set', 'Map', 'Queue'],
-  },
-  {
-    _id: 'python-basics',
-    title: 'Python Basics Notes',
-    category: 'python',
-    type: 'PDF',
-    language: 'Python',
-    description: 'Learn Python programming from variables to functions.',
-    pages: 24,
-    downloads: '15K',
-    icon: 'python',
-    updated: '2026',
-    topics: ['Syntax', 'Functions', 'Modules', 'Files'],
-  },
-  {
-    _id: 'linux-commands',
-    title: 'Linux Commands',
-    category: 'devops',
-    type: 'Cheat Sheet',
-    language: 'Linux',
-    description: 'Most commonly used Linux commands for developers.',
-    pages: 16,
-    downloads: '11K',
-    icon: 'terminal',
-    updated: '2026',
-    topics: ['Files', 'Permissions', 'Processes', 'Networking'],
-  },
-  {
-    _id: 'dsa-source',
-    title: 'DSA in Java - Source Code',
-    category: 'dsa',
-    type: 'Source Code',
-    language: 'Java',
-    description: 'Java implementations of common DSA patterns.',
-    pages: 42,
-    downloads: '18K',
-    icon: 'github',
-    updated: '2026',
-    topics: ['Arrays', 'Trees', 'Graphs', 'Dynamic Programming'],
-  },
-  {
-    _id: 'react-hooks',
-    title: 'React Hooks Field Guide',
-    category: 'development',
-    type: 'PDF',
-    language: 'JavaScript',
-    description: 'Practical hook patterns for modern React applications.',
-    pages: 31,
-    downloads: '7.4K',
-    icon: 'code',
-    updated: '2026',
-    topics: ['useState', 'useEffect', 'Forms', 'Performance'],
-  },
-  {
-    _id: 'git-workflow',
-    title: 'Git Workflow Cheatsheet',
-    category: 'devops',
-    type: 'Cheat Sheet',
-    language: 'Git',
-    description: 'Branching, merging, rebasing and pull request workflows.',
-    pages: 10,
-    downloads: '6.9K',
-    icon: 'github',
-    updated: '2026',
-    topics: ['Branches', 'Merge', 'Rebase', 'Pull Requests'],
-  },
-];
-
-const categories = [
-  { id: 'all', label: 'All' },
-  { id: 'java', label: 'Java' },
-  { id: 'sql', label: 'SQL' },
-  { id: 'python', label: 'Python' },
-  { id: 'dsa', label: 'DSA' },
-  { id: 'development', label: 'Development' },
-  { id: 'devops', label: 'DevOps' },
-];
+const fallbackNotes = [];
 
 const typeOptions = ['All Types', 'PDF', 'Cheat Sheet', 'Notes', 'Source Code'];
 const languageOptions = ['All Languages', 'Java', 'SQL', 'Python', 'Linux', 'JavaScript', 'Git'];
@@ -153,48 +41,53 @@ function Icon({ name, className = 'h-5 w-5' }) {
   return icons[name] || icons.file;
 }
 
-function normalizeNote(item, index) {
-  const fallback = fallbackNotes[index % fallbackNotes.length];
-  const category = String(item.category || fallback.category).toLowerCase();
-  const resourceType = item.resourceType || item.type || fallback.type;
+function normalizeNote(item) {
+  const category = String(item.category || 'development').toLowerCase();
+  const resourceType = item.resourceType || item.type || 'PDF';
 
   return {
-    ...fallback,
     ...item,
-    _id: item._id || item.id || fallback._id,
+    _id: item._id || item.id || item.slug || item.title,
     category,
     type: resourceType,
-    language: item.language || fallback.language,
-    pages: Number(item.pages || fallback.pages || 10),
-    downloads: item.downloads || fallback.downloads,
-    icon: item.icon || fallback.icon,
-    topics: item.topics || fallback.topics,
-    updated: item.updated || fallback.updated,
+    language: item.language || 'General',
+    pages: Number(item.pages || 0),
+    downloads: item.downloads || '0',
+    icon: item.icon || iconForNote(item),
+    topics: Array.isArray(item.topics) ? item.topics : [],
+    updated: item.updated || item.updatedAt || new Date().toISOString(),
+    fileName: item.fileName || '',
+    fileType: item.fileType || '',
+    fileData: item.fileData || '',
   };
 }
 
+function iconForNote(item) {
+  const category = String(item.category || '').toLowerCase();
+  if (['java'].includes(category)) return 'code';
+  if (['sql'].includes(category)) return 'database';
+  if (['python'].includes(category)) return 'python';
+  if (['devops'].includes(category)) return 'terminal';
+  if (['dsa'].includes(category)) return 'github';
+  return 'file';
+}
+
 export default function Notes() {
+  const auth = useAuth();
   const { items, loading } = useApiCollection('notes');
+  const { savedIds, toggleSaved } = useSavedContent(auth?.token);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [type, setType] = useState('All Types');
   const [language, setLanguage] = useState('All Languages');
   const [sort, setSort] = useState('Most Popular');
   const [preview, setPreview] = useState(null);
-  const [savedIds, setSavedIds] = useState(() => {
-    try {
-      return new Set(JSON.parse(localStorage.getItem('codemastery_saved_notes') || '[]'));
-    } catch {
-      return new Set();
-    }
-  });
 
-  const notes = useMemo(() => {
-    const merged = new Map();
-    fallbackNotes.forEach((item, index) => merged.set(item._id, normalizeNote(item, index)));
-    items.forEach((item, index) => merged.set(item._id || item.id || `api-${index}`, normalizeNote(item, index)));
-    return Array.from(merged.values());
-  }, [items]);
+  const notes = useMemo(() => items.map((item) => normalizeNote(item)), [items]);
+  const categories = useMemo(() => {
+    const values = Array.from(new Set(notes.map((item) => item.category).filter(Boolean))).sort();
+    return [{ id: 'all', label: 'All' }, ...values.map((value) => ({ id: value, label: value.replace(/^\w/, (letter) => letter.toUpperCase()) }))];
+  }, [notes]);
 
   const filtered = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -214,21 +107,21 @@ export default function Notes() {
     });
   }, [category, language, notes, query, sort, type]);
 
-  useEffect(() => {
-    localStorage.setItem('codemastery_saved_notes', JSON.stringify(Array.from(savedIds)));
-  }, [savedIds]);
+  const toggleSave = async (id) => {
+    if (!auth?.token) {
+      navigate('/login');
+      return;
+    }
 
-  const toggleSave = (id) => {
-    setSavedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    try {
+      await toggleSaved(id);
+    } catch (_error) {
+      navigate('/login');
+    }
   };
 
   const downloadNote = (note) => {
-    const content = [
+    const url = note.fileData || URL.createObjectURL(new Blob([
       note.title,
       '',
       note.description,
@@ -239,14 +132,12 @@ export default function Notes() {
       '',
       'Topics:',
       ...note.topics.map((topic) => `- ${topic}`),
-    ].join('\n');
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+    ], { type: 'text/plain;charset=utf-8' }));
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `${note.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.txt`;
+    anchor.download = note.fileName || `${note.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.${note.fileType.includes('pdf') ? 'pdf' : 'txt'}`;
     anchor.click();
-    URL.revokeObjectURL(url);
+    if (!note.fileData) URL.revokeObjectURL(url);
   };
 
   return (
@@ -488,6 +379,15 @@ function PreviewModal({ note, saved, onClose, onToggleSave, onDownload }) {
             <Info label="Pages" value={note.pages} />
             <Info label="Downloads" value={note.downloads} />
           </div>
+          <div className="mt-5 overflow-hidden rounded-[8px] border border-white/10 bg-black/30">
+            {note.fileData ? (
+              <iframe title={note.title} src={note.fileData} className="h-[60vh] w-full" />
+            ) : (
+              <div className="grid min-h-[260px] place-items-center px-6 py-12 text-center text-sm text-slate-400">
+                No file preview available. Upload a PDF in the admin panel to enable preview.
+              </div>
+            )}
+          </div>
           <div className="mt-5">
             <h3 className="text-sm font-black uppercase text-white">Included Topics</h3>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -518,3 +418,6 @@ function Info({ label, value }) {
     </div>
   );
 }
+
+
+

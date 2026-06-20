@@ -1,8 +1,7 @@
-import { categories } from '../../data/content.js';
 import { glass, input } from './classes.js';
 
-export default function FilterBar({ type, query, setQuery, filter, setFilter }) {
-  const options = ['all', ...categories.map((category) => category.id), type === 'blogs' ? 'career' : null].filter(Boolean);
+export default function FilterBar({ type, query, setQuery, filter, setFilter, options = [] }) {
+  const values = ['all', ...options.filter(Boolean)];
 
   return (
     <div className={`${glass} flex flex-col gap-5 md:flex-row md:items-center md:justify-between`}>
@@ -16,7 +15,7 @@ export default function FilterBar({ type, query, setQuery, filter, setFilter }) 
         />
       </div>
       <div className="flex flex-wrap gap-2">
-        {options.map((option) => (
+        {values.map((option) => (
           <button
             key={option}
             type="button"

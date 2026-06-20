@@ -1,138 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../hooks/useAuth.js';
+import { navigate } from '../hooks/useRoute.js';
 import { useApiCollection } from '../hooks/useApiCollection.js';
+import { useSavedContent } from '../hooks/useSavedContent.js';
 
-const fallbackTutorials = [
-  {
-    _id: 'java-foundations',
-    title: 'Java Foundations Masterclass',
-    category: 'java',
-    description: 'Start Java with syntax, OOP and clean coding habits.',
-    duration: '42 min',
-    minutes: 42,
-    level: 'Beginner',
-    status: 'Published',
-    lessons: 18,
-    instructor: 'Aarav Sharma',
-    icon: 'java',
-  },
-  {
-    _id: 'react-components',
-    title: 'React Components From Scratch',
-    category: 'development',
-    description: 'Build reusable components and stateful UI patterns.',
-    duration: '55 min',
-    minutes: 55,
-    level: 'Intermediate',
-    status: 'Published',
-    lessons: 22,
-    instructor: 'Nisha Rao',
-    icon: 'react',
-  },
-  {
-    _id: 'sql-basics',
-    title: 'SQL Basics For Beginners',
-    category: 'sql',
-    description: 'Learn SQL fundamentals with practical examples.',
-    duration: '38 min',
-    minutes: 38,
-    level: 'Beginner',
-    status: 'Published',
-    lessons: 15,
-    instructor: 'Kabir Mehta',
-    icon: 'sql',
-  },
-  {
-    _id: 'dsa-essentials',
-    title: 'Data Structures & Algorithms',
-    category: 'dsa',
-    description: 'Master arrays, linked lists, stacks, queues and more.',
-    duration: '1h 02m',
-    minutes: 62,
-    level: 'Advanced',
-    status: 'Published',
-    lessons: 28,
-    instructor: 'Riya Iyer',
-    icon: 'dsa',
-  },
-  {
-    _id: 'docker-devops',
-    title: 'Docker And CI/CD Workflows',
-    category: 'devops',
-    description: 'Ship reliable apps with containers, images and automated pipelines.',
-    duration: '48 min',
-    minutes: 48,
-    level: 'Intermediate',
-    status: 'Published',
-    lessons: 19,
-    instructor: 'Vikram Sethi',
-    icon: 'devops',
-  },
-  {
-    _id: 'spring-boot-api',
-    title: 'Spring Boot REST APIs',
-    category: 'java',
-    description: 'Design clean controllers, services, DTOs and database integrations.',
-    duration: '1h 14m',
-    minutes: 74,
-    level: 'Advanced',
-    status: 'Published',
-    lessons: 31,
-    instructor: 'Aarav Sharma',
-    icon: 'java',
-  },
-  {
-    _id: 'frontend-layouts',
-    title: 'Modern CSS Layouts',
-    category: 'development',
-    description: 'Create responsive grids, dashboards and polished app screens.',
-    duration: '46 min',
-    minutes: 46,
-    level: 'Beginner',
-    status: 'Published',
-    lessons: 17,
-    instructor: 'Nisha Rao',
-    icon: 'react',
-  },
-  {
-    _id: 'query-optimization',
-    title: 'SQL Query Optimization',
-    category: 'sql',
-    description: 'Use indexes, explain plans and schema choices to speed up queries.',
-    duration: '52 min',
-    minutes: 52,
-    level: 'Intermediate',
-    status: 'Published',
-    lessons: 20,
-    instructor: 'Kabir Mehta',
-    icon: 'sql',
-  },
-  {
-    _id: 'graph-algorithms',
-    title: 'Graph Algorithms Bootcamp',
-    category: 'dsa',
-    description: 'Practice BFS, DFS, shortest paths and interview graph patterns.',
-    duration: '1h 20m',
-    minutes: 80,
-    level: 'Advanced',
-    status: 'Published',
-    lessons: 34,
-    instructor: 'Riya Iyer',
-    icon: 'dsa',
-  },
-  {
-    _id: 'git-github',
-    title: 'Git And GitHub Essentials',
-    category: 'devops',
-    description: 'Learn branches, pull requests, merges and team workflows.',
-    duration: '35 min',
-    minutes: 35,
-    level: 'Beginner',
-    status: 'Published',
-    lessons: 14,
-    instructor: 'Vikram Sethi',
-    icon: 'devops',
-  },
-];
+const fallbackTutorials = [];
 
 const categoryOptions = [
   { id: 'all', label: 'All' },
@@ -186,21 +58,26 @@ function Icon({ name, className = 'h-5 w-5' }) {
   return icons[name] || icons.book;
 }
 
-function normalizeTutorial(item, index) {
-  const fallback = fallbackTutorials[index % fallbackTutorials.length];
-  const category = String(item.category || fallback.category || 'development').toLowerCase();
-
+function normalizeTutorial(item) {
+  const category = String(item.category || 'development').toLowerCase();
   return {
-    ...fallback,
     ...item,
-    _id: item._id || item.id || fallback._id,
+    _id: item._id || item.id || item.slug || item.title,
     category,
-    status: item.status ? `${item.status}`.replace(/^./, (letter) => letter.toUpperCase()) : fallback.status,
-    minutes: item.minutes || parseDuration(item.duration) || fallback.minutes,
-    icon: item.icon || fallback.icon,
-    instructor: item.instructor || fallback.instructor,
-    lessons: item.lessons || fallback.lessons,
+    status: item.status ? `${item.status}`.replace(/^./, (letter) => letter.toUpperCase()) : 'Published',
+    minutes: item.minutes || parseDuration(item.duration),
+    icon: item.icon || iconForCategory(category),
+    instructor: item.instructor || item.author || 'The Epoch Nova',
+    lessons: item.lessons || 0,
   };
+}
+
+function iconForCategory(category) {
+  if (['java'].includes(category)) return 'java';
+  if (['sql'].includes(category)) return 'sql';
+  if (['dsa'].includes(category)) return 'dsa';
+  if (['devops'].includes(category)) return 'devops';
+  return 'react';
 }
 
 function parseDuration(value = '') {
@@ -319,7 +196,9 @@ function TutorialCard({ tutorial, saved, onToggleSave, onWatch }) {
 }
 
 export default function Tutorials() {
+  const auth = useAuth();
   const { items, loading } = useApiCollection('tutorials');
+  const { savedIds, toggleSaved } = useSavedContent(auth?.token);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [level, setLevel] = useState('All Levels');
@@ -328,20 +207,8 @@ export default function Tutorials() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [activeTutorial, setActiveTutorial] = useState(null);
-  const [savedIds, setSavedIds] = useState(() => {
-    try {
-      return new Set(JSON.parse(localStorage.getItem('codemastery_saved_tutorials') || '[]'));
-    } catch {
-      return new Set();
-    }
-  });
 
-  const tutorials = useMemo(() => {
-    const merged = new Map();
-    fallbackTutorials.forEach((item, index) => merged.set(item._id, normalizeTutorial(item, index)));
-    items.forEach((item, index) => merged.set(item._id || item.id || `api-${index}`, normalizeTutorial(item, index)));
-    return Array.from(merged.values());
-  }, [items]);
+  const tutorials = useMemo(() => items.map((item) => normalizeTutorial(item)), [items]);
 
   const filtered = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -368,17 +235,17 @@ export default function Tutorials() {
     setPage(1);
   }, [category, level, query, shortOnly, sort]);
 
-  useEffect(() => {
-    localStorage.setItem('codemastery_saved_tutorials', JSON.stringify(Array.from(savedIds)));
-  }, [savedIds]);
+  const toggleSave = async (id) => {
+    if (!auth?.token) {
+      navigate('/login');
+      return;
+    }
 
-  const toggleSave = (id) => {
-    setSavedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    try {
+      await toggleSaved(id);
+    } catch (_error) {
+      navigate('/login');
+    }
   };
 
   const clearFilters = () => {
@@ -658,3 +525,8 @@ function WatchModal({ tutorial, saved, onClose, onToggleSave }) {
     </div>
   );
 }
+
+
+
+
+

@@ -1,4 +1,5 @@
 import StatCard from '../components/cards/StatCard.jsx';
+import BrandMark from '../components/ui/BrandMark.jsx';
 import PageHeader from '../components/ui/PageHeader.jsx';
 import SectionHeader from '../components/ui/SectionHeader.jsx';
 import { glass, gradientText, shell } from '../components/ui/classes.js';
@@ -31,9 +32,9 @@ export default function About() {
             </div>
           </div>
           <div className={`${glass} flex min-h-80 flex-col items-center justify-center text-center`}>
-            <span className="mb-5 flex h-28 w-56 items-center justify-center overflow-hidden rounded-xl border border-cyan-300/20 bg-black">
-              <img src="/assets/ten-logo.png" alt="TEN - The Epoch Nova" className="h-full w-full object-contain p-2" />
-            </span>
+            <div className="mb-5">
+              <BrandMark compact />
+            </div>
             <p className="text-neutral-400">Building the future of tech education</p>
           </div>
         </div>

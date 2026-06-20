@@ -1,6 +1,41 @@
 import { buttonPrimary, buttonSecondary, glass } from '../ui/classes.js';
 
 export default function NoteCard({ item }) {
+  const hasFile = Boolean(item.fileData || item.fileUrl);
+
+  function downloadFile() {
+    if (item.fileData) {
+      const anchor = document.createElement('a');
+      anchor.href = item.fileData;
+      anchor.download = item.fileName || `${String(item.title || 'resource').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.pdf`;
+      anchor.click();
+      return;
+    }
+
+    const content = [
+      item.title,
+      '',
+      item.description || '',
+      '',
+      `Type: ${item.resourceType || item.type || 'PDF'}`,
+      `Category: ${item.category || 'general'}`,
+    ].join('\n');
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${String(item.title || 'resource').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.txt`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function previewFile() {
+    const source = item.fileData || item.fileUrl;
+    if (source) {
+      window.open(source, '_blank', 'noopener,noreferrer');
+    }
+  }
+
   return (
     <article className={`${glass} flex min-h-72 flex-col`}>
       <div className="mb-5 flex items-center justify-between">
@@ -14,8 +49,12 @@ export default function NoteCard({ item }) {
         <span>{item.category}</span>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <button className={`${buttonPrimary} px-3 py-2 text-sm`}>Download</button>
-        <button className={`${buttonSecondary} px-3 py-2 text-sm`}>Preview</button>
+        <button type="button" onClick={downloadFile} className={`${buttonPrimary} px-3 py-2 text-sm`}>
+          {hasFile ? 'Download PDF' : 'Download'}
+        </button>
+        <button type="button" onClick={previewFile} className={`${buttonSecondary} px-3 py-2 text-sm`} disabled={!hasFile}>
+          Preview
+        </button>
       </div>
     </article>
   );

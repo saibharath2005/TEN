@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { navigate } from '../../hooks/useRoute.js';
+import { useEffect, useState } from 'react';
 import { apiPost } from '../../services/api.js';
+import { navigate } from '../../hooks/useRoute.js';
+import { setStoredAuth, useAuth } from '../../hooks/useAuth.js';
 import BrandMark from '../ui/BrandMark.jsx';
 
 function Icon({ name, className = 'h-5 w-5' }) {
@@ -61,6 +62,7 @@ function FormField({ label, type, name, placeholder, value, onChange, icon, auto
 
 export default function AuthPage({ mode }) {
   const isLogin = mode === 'login';
+  const auth = useAuth();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -72,6 +74,12 @@ export default function AuthPage({ mode }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (auth?.token) {
+      navigate(auth?.user?.role === 'admin' ? '/admin' : '/dashboard');
+    }
+  }, [auth]);
 
   async function onSubmit(event) {
     event.preventDefault();
@@ -90,9 +98,9 @@ export default function AuthPage({ mode }) {
         : { name: form.name.trim(), email: form.email.trim(), password: form.password };
 
       const data = await apiPost(isLogin ? '/auth/login' : '/auth/register', payload);
-      localStorage.setItem('epochNovaAuth', JSON.stringify(data));
+      setStoredAuth({ ...data, loggedInAt: new Date().toISOString() });
       setSuccess(isLogin ? 'Login successful. Redirecting...' : 'Account created successfully. Redirecting...');
-      setTimeout(() => navigate('/dashboard'), 600);
+      setTimeout(() => navigate(data?.user?.role === 'admin' ? '/admin' : '/dashboard'), 600);
     } catch (err) {
       setError(err?.message || 'Something went wrong.');
     } finally {
@@ -105,7 +113,7 @@ export default function AuthPage({ mode }) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_26%),radial-gradient(circle_at_80%_15%,rgba(124,58,237,0.10),transparent_24%),linear-gradient(180deg,#050b13_0%,#04070d_100%)]" />
       <div className="relative w-full max-w-[620px] rounded-[14px] border border-cyan-300/20 bg-[#050a11]/95 px-6 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.6)] sm:px-10">
         <div className="mx-auto mb-6 flex justify-center">
-          <BrandMark className="shrink-0" />
+          <BrandMark compact />
         </div>
 
         <div className="text-center">
@@ -233,3 +241,4 @@ function SmallMark({ icon }) {
 
   return icons[icon] || icons.brain;
 }
+

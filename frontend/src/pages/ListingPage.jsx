@@ -10,9 +10,13 @@ export default function ListingPage({ title, accent, subtitle, type }) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
 
+  const filterOptions = useMemo(() => {
+    return Array.from(new Set(items.map((item) => String(item.category || '').toLowerCase()).filter(Boolean))).sort();
+  }, [items]);
+
   const filtered = useMemo(() => {
     return items.filter((item) => {
-      const matchesFilter = filter === 'all' || item.category === filter;
+      const matchesFilter = filter === 'all' || String(item.category || '').toLowerCase() === filter;
       const matchesQuery = JSON.stringify(item).toLowerCase().includes(query.toLowerCase());
       return matchesFilter && matchesQuery;
     });
@@ -23,7 +27,7 @@ export default function ListingPage({ title, accent, subtitle, type }) {
       <PageHeader title={title} accent={accent} subtitle={subtitle} />
       <section className="py-5">
         <div className={shell}>
-          <FilterBar type={type} query={query} setQuery={setQuery} filter={filter} setFilter={setFilter} />
+          <FilterBar type={type} query={query} setQuery={setQuery} filter={filter} setFilter={setFilter} options={filterOptions} />
         </div>
       </section>
       <section className="py-10">

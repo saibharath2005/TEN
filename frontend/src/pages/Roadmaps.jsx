@@ -1,36 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { roadmapData } from '../data/content.js';
-
-const roadmapEnhancements = {
-  'Java Developer Roadmap': {
-    id: 'java',
-    tag: 'Beginner to Advanced',
-    tone: 'violet',
-    difficulty: 'Beginner',
-    outcomes: ['Java syntax', 'OOP design', 'Spring APIs', 'SQL integration'],
-  },
-  'Backend Developer Roadmap': {
-    id: 'backend',
-    tag: 'Intermediate to Expert',
-    tone: 'cyan',
-    difficulty: 'Intermediate',
-    outcomes: ['REST APIs', 'Databases', 'Auth flows', 'Cloud deployment'],
-  },
-  'Full Stack Developer Roadmap': {
-    id: 'fullstack',
-    tag: 'Beginner to Expert',
-    tone: 'blue',
-    difficulty: 'Beginner',
-    outcomes: ['React UI', 'Node APIs', 'Testing', 'Deployment'],
-  },
-  'Software Engineer Roadmap': {
-    id: 'software',
-    tag: 'Rigorous Path',
-    tone: 'emerald',
-    difficulty: 'Advanced',
-    outcomes: ['DSA', 'Systems', 'Design patterns', 'System design'],
-  },
-};
+import { useAuth } from '../hooks/useAuth.js';
+import { navigate } from '../hooks/useRoute.js';
+import { useApiCollection } from '../hooks/useApiCollection.js';
+import { useSavedContent } from '../hooks/useSavedContent.js';
 
 const difficultyOptions = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
@@ -64,33 +36,42 @@ function Icon({ name, className = 'h-5 w-5' }) {
   return icons[name] || icons.book;
 }
 
-function prepareRoadmap(roadmap, index) {
-  const extra = roadmapEnhancements[roadmap.title] || {};
-  const id = extra.id || roadmap.title.toLowerCase().replace(/\W+/g, '-');
+function normalizeRoadmap(roadmap, index) {
+  const steps = Array.isArray(roadmap.steps) ? roadmap.steps : String(roadmap.steps || '').split('\n').map((line) => line.trim()).filter(Boolean);
+  const outcomes = Array.isArray(roadmap.outcomes) ? roadmap.outcomes : [];
+  const title = roadmap.title || 'Untitled Roadmap';
+  const id = roadmap._id || roadmap.slug || title.toLowerCase().replace(/\\W+/g, '-');
 
   return {
     ...roadmap,
-    ...extra,
     id,
-    tone: extra.tone || ['violet', 'cyan', 'blue', 'emerald'][index % 4],
-    difficulty: extra.difficulty || 'Beginner',
-    tag: extra.tag || roadmap.level,
+    title,
+    desc: roadmap.description || roadmap.desc || '',
+    level: roadmap.level || 'Beginner to Advanced',
+    duration: roadmap.duration || `${roadmap.modules || 0} Modules`,
+    modules: roadmap.modules || 0,
+    steps,
+    outcomes,
+    difficulty: roadmap.difficulty || roadmap.level || 'Beginner',
+    tone: roadmap.tone || ['violet', 'cyan', 'blue', 'emerald'][index % 4],
+    tag: roadmap.tag || roadmap.level || 'Beginner to Advanced',
+    icon: roadmap.icon || (index % 2 === 0 ? 'code' : 'route'),
   };
 }
 
+function getRoadmapKey(roadmap) {
+  return roadmap?._id || roadmap?.id || roadmap?.slug || roadmap?.title;
+}
+
 export default function Roadmaps() {
+  const auth = useAuth();
   const [difficulty, setDifficulty] = useState('All');
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
-  const [savedIds, setSavedIds] = useState(() => {
-    try {
-      return new Set(JSON.parse(localStorage.getItem('codemastery_saved_roadmaps') || '[]'));
-    } catch {
-      return new Set();
-    }
-  });
+  const { items: remoteRoadmaps } = useApiCollection('roadmaps');
+  const { savedIds, toggleSaved } = useSavedContent(auth?.token);
 
-  const roadmaps = useMemo(() => roadmapData.map(prepareRoadmap), []);
+  const roadmaps = useMemo(() => remoteRoadmaps.map((roadmap, index) => normalizeRoadmap(roadmap, index)), [remoteRoadmaps]);
 
   const filtered = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -101,17 +82,17 @@ export default function Roadmaps() {
     });
   }, [difficulty, query, roadmaps]);
 
-  useEffect(() => {
-    localStorage.setItem('codemastery_saved_roadmaps', JSON.stringify(Array.from(savedIds)));
-  }, [savedIds]);
+  const toggleSave = async (id) => {
+    if (!auth?.token) {
+      navigate('/login');
+      return;
+    }
 
-  const toggleSave = (id) => {
-    setSavedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    try {
+      await toggleSaved(id);
+    } catch (_error) {
+      navigate('/login');
+    }
   };
 
   return (
@@ -173,7 +154,7 @@ export default function Roadmaps() {
               <RoadmapCard
                 key={roadmap.id}
                 roadmap={roadmap}
-                saved={savedIds.has(roadmap.id)}
+                saved={savedIds.has(getRoadmapKey(roadmap))}
                 onToggleSave={toggleSave}
                 onOpen={setSelected}
               />
@@ -190,7 +171,7 @@ export default function Roadmaps() {
       {selected && (
         <RoadmapModal
           roadmap={selected}
-          saved={savedIds.has(selected.id)}
+          saved={savedIds.has(getRoadmapKey(selected))}
           onClose={() => setSelected(null)}
           onToggleSave={toggleSave}
         />
@@ -236,6 +217,7 @@ function Feature({ icon, title, text, tone }) {
 }
 
 function RoadmapCard({ roadmap, saved, onToggleSave, onOpen }) {
+  const roadmapKey = getRoadmapKey(roadmap);
   const tones = {
     violet: {
       card: 'border-violet-500/35 hover:border-violet-400/70',
@@ -278,7 +260,7 @@ function RoadmapCard({ roadmap, saved, onToggleSave, onOpen }) {
         <button
           type="button"
           aria-label={saved ? 'Remove saved roadmap' : 'Save roadmap'}
-          onClick={() => onToggleSave(roadmap.id)}
+          onClick={() => onToggleSave(roadmapKey)}
           className={`absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-[7px] border transition ${saved ? 'border-violet-300 bg-violet-500/20 text-violet-100' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10'}`}
         >
           <Icon name="bookmark" className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
@@ -399,7 +381,7 @@ function RoadmapModal({ roadmap, saved, onClose, onToggleSave }) {
 
           <button
             type="button"
-            onClick={() => onToggleSave(roadmap.id)}
+            onClick={() => onToggleSave(getRoadmapKey(roadmap))}
             className={`mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-[8px] border px-5 text-sm font-bold transition ${saved ? 'border-violet-300 bg-violet-500/20 text-violet-100' : 'border-white/10 bg-white/[0.04] text-white hover:bg-white/10'}`}
           >
             <Icon name="bookmark" className={`h-5 w-5 ${saved ? 'fill-current' : ''}`} />
@@ -410,3 +392,9 @@ function RoadmapModal({ roadmap, saved, onClose, onToggleSave }) {
     </div>
   );
 }
+
+
+
+
+
+

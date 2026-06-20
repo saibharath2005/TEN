@@ -1,10 +1,9 @@
-import BlogCard from '../cards/BlogCard.jsx';
 import NoteCard from '../cards/NoteCard.jsx';
 import TutorialCard from '../cards/TutorialCard.jsx';
 import EmptyState from './EmptyState.jsx';
 
 export default function ContentGrid({ type, items, emptyTitle }) {
-  const gridClass = type === 'tutorials' || type === 'blogs'
+  const gridClass = type === 'tutorials'
     ? 'grid gap-7 md:grid-cols-2 lg:grid-cols-3'
     : 'grid gap-7 md:grid-cols-2 lg:grid-cols-3';
 
@@ -20,7 +19,6 @@ export default function ContentGrid({ type, items, emptyTitle }) {
     <div className={gridClass}>
       {items.map((item) => {
         if (type === 'tutorials') return <TutorialCard key={item._id} item={item} />;
-        if (type === 'blogs') return <BlogCard key={item._id} item={item} />;
         return <NoteCard key={item._id} item={item} />;
       })}
     </div>

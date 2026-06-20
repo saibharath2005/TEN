@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { seeded } from '../data/content.js';
 import { apiGet } from '../services/api.js';
 
 export function useApiCollection(name) {
-  const [items, setItems] = useState(seeded[name] || []);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -11,8 +10,8 @@ export function useApiCollection(name) {
     setLoading(true);
 
     apiGet(`/${name}`)
-      .then((data) => mounted && setItems(data.items || data))
-      .catch(() => mounted && setItems(seeded[name] || []))
+      .then((data) => mounted && setItems(data.items || []))
+      .catch(() => mounted && setItems([]))
       .finally(() => mounted && setLoading(false));
 
     return () => {

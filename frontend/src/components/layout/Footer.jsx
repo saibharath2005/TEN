@@ -1,4 +1,4 @@
-import Link from '../ui/Link.jsx';
+﻿import Link from '../ui/Link.jsx';
 import BrandMark from '../ui/BrandMark.jsx';
 import { shell } from '../ui/classes.js';
 
@@ -15,7 +15,7 @@ export default function Footer() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div className="space-y-5">
             <Link href="/" className="flex items-center gap-3 text-lg font-bold text-white">
-              <BrandMark className="shrink-0" compact />
+              <BrandMark compact />
             </Link>
             <p className="max-w-sm text-sm leading-6 text-neutral-400">
               Your gateway to mastering technology. Learn programming, software engineering and DevOps with premium structured guides.
