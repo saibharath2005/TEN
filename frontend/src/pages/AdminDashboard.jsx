@@ -211,18 +211,20 @@ function hydrateForm(collection, item) {
 
 function Field({ label, children }) {
   return (
-    <label className="grid gap-2 text-sm font-medium text-neutral-300">
+    <label className="grid w-full max-w-full min-w-0 gap-2 text-sm font-medium text-neutral-300">
       <span>{label}</span>
-      {children}
+      <div className="w-full max-w-full min-w-0 [&>*]:box-border [&>*]:w-full [&>*]:max-w-full">
+        {children}
+      </div>
     </label>
   );
 }
 
 function SummaryCard({ label, value }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-neutral-900/70 p-4 text-center shadow-lg shadow-black/20">
-      <div className="text-xs uppercase tracking-[0.18em] text-neutral-500">{label}</div>
-      <div className="mt-2 text-3xl font-black text-white">{value}</div>
+    <div className="rounded-2xl border border-white/10 bg-neutral-900/70 p-3 text-center shadow-lg shadow-black/20 sm:p-4">
+      <div className="text-[10px] uppercase tracking-[0.14em] text-neutral-500 sm:text-xs sm:tracking-[0.18em]">{label}</div>
+      <div className="mt-1.5 text-2xl font-black text-white sm:mt-2 sm:text-3xl">{value}</div>
     </div>
   );
 }
@@ -443,39 +445,40 @@ export default function AdminDashboard() {
 
   if (!auth?.token || auth?.user?.role !== 'admin') {
     return (
-      <>
+      <div className="w-full overflow-x-hidden">
         <PageHeader title="Admin" accent="Dashboard" subtitle="Sign in to manage tutorials, notes, roadmaps and resources." />
-        <section className="py-10">
-          <div className={shell}>
-            <form className={`${glass} mx-auto grid max-w-md gap-5`} onSubmit={handleLogin}>
-              <h3 className="text-2xl font-bold text-white">Admin Login</h3>
+        <section className="w-full px-4 py-8 sm:px-6 sm:py-10">
+          <div className={`${shell} w-full max-w-full`}>
+            <form className={`${glass} mx-auto grid w-full max-w-md gap-4 p-5 sm:gap-5 sm:p-6`} onSubmit={handleLogin}>
+              <h3 className="text-xl font-bold text-white sm:text-2xl">Admin Login</h3>
               <Field label="Email">
                 <input className={input} name="email" type="email" value={authDraft.email} onChange={(event) => setAuthDraft((current) => ({ ...current, email: event.target.value }))} />
               </Field>
               <Field label="Password">
                 <input className={input} name="password" type="password" value={authDraft.password} onChange={(event) => setAuthDraft((current) => ({ ...current, password: event.target.value }))} />
               </Field>
-              <button className={buttonPrimary}>Login</button>
-              <p className="text-sm text-neutral-500">Seed admin: admin@theepochnova.com / admin123</p>
+              <button className={`${buttonPrimary} w-full justify-center`}>Login</button>
+              <p className="text-xs text-neutral-500 sm:text-sm">Seed admin: admin@theepochnova.com / admin123</p>
               {error && <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</p>}
             </form>
           </div>
         </section>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="w-full overflow-x-hidden">
       <PageHeader title="Admin" accent="Dashboard" subtitle="Manage tutorials, notes, roadmaps and resources end to end." />
-      <section className="pb-10">
-        <div className={shell}>
-          <div className="mb-6 flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-neutral-900/70 p-3 backdrop-blur">
+      <section className="w-full px-4 pb-8 sm:px-6 sm:pb-10">
+        <div className={`${shell} w-full max-w-full`}>
+          {/* Collection tabs — horizontally scrollable on mobile, no wrap-cramming */}
+          <div className="mb-5 flex w-full max-w-full gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-neutral-900/70 p-2.5 backdrop-blur [-ms-overflow-style:none] [scrollbar-width:none] sm:mb-6 sm:flex-wrap sm:p-3 [&::-webkit-scrollbar]:hidden">
             {collections.map((item) => (
               <button
                 key={item}
                 type="button"
-                className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${collection === item ? 'border-transparent bg-gradient-to-r from-cyan-300 to-violet-500 text-black' : 'border-white/10 bg-white/[0.03] text-neutral-300 hover:bg-white/10'}`}
+                className={`shrink-0 whitespace-nowrap rounded-lg border px-3.5 py-2 text-xs font-medium transition sm:px-4 sm:text-sm ${collection === item ? 'border-transparent bg-gradient-to-r from-cyan-300 to-violet-500 text-black' : 'border-white/10 bg-white/[0.03] text-neutral-300 hover:bg-white/10'}`}
                 onClick={() => setCollection(item)}
               >
                 {item}
@@ -483,22 +486,23 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          <div className="mb-6 grid gap-4 md:grid-cols-4">
+          {/* Summary cards — 2 cols on mobile, 4 on tablet+ */}
+          <div className="mb-5 grid w-full max-w-full grid-cols-2 gap-3 sm:mb-6 sm:gap-4 md:grid-cols-4">
             <SummaryCard label="Total" value={stats?.total ?? items.length} />
             <SummaryCard label="Published" value={stats?.published ?? 0} />
             <SummaryCard label="Drafts" value={stats?.drafts ?? 0} />
             <SummaryCard label="Featured" value={stats?.featured ?? 0} />
           </div>
 
-          {notice && <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{notice}</div>}
-          {error && <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>}
+          {notice && <div className="mb-4 w-full max-w-full break-words rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{notice}</div>}
+          {error && <div className="mb-4 w-full max-w-full break-words rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>}
 
-          <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-            <form className={`${glass} grid gap-4`} onSubmit={handleSubmit}>
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-xl font-bold text-white">{actionLabel}</h3>
+          <div className="grid w-full max-w-full gap-5 sm:gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+            <form className={`${glass} grid w-full max-w-full min-w-0 gap-4 p-4 sm:p-5`} onSubmit={handleSubmit}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-lg font-bold text-white sm:text-xl">{actionLabel}</h3>
                 {editingId && (
-                  <button type="button" onClick={resetForm} className={buttonSecondary}>
+                  <button type="button" onClick={resetForm} className={`${buttonSecondary} text-sm`}>
                     Cancel
                   </button>
                 )}
@@ -534,10 +538,10 @@ export default function AdminDashboard() {
                     <input className={input} value={form.instructor} onChange={(event) => setForm((current) => ({ ...current, instructor: event.target.value }))} placeholder="Instructor name" />
                   </Field>
                   <Field label="Tutorial Image">
-                    <input className={input} type="file" accept="image/*" onChange={handleTutorialImageInput} />
+                    <input className={`${input} file:mr-3 file:rounded-md file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-white sm:file:text-sm`} type="file" accept="image/*" onChange={handleTutorialImageInput} />
                   </Field>
                   <Field label="Selected Image">
-                    <input className={input} readOnly value={form.imageName || 'No image selected'} />
+                    <input className={`${input} truncate`} readOnly value={form.imageName || 'No image selected'} />
                   </Field>
                   <Field label="YouTube URL">
                     <input className={input} value={form.videoUrl} onChange={(event) => setForm((current) => ({ ...current, videoUrl: event.target.value }))} placeholder="https://www.youtube.com/watch?v=..." />
@@ -560,16 +564,16 @@ export default function AdminDashboard() {
                     <input className={input} value={form.readTime} onChange={(event) => setForm((current) => ({ ...current, readTime: event.target.value }))} placeholder="8 min read" />
                   </Field>
                   <Field label="PDF File">
-                    <input className={input} type="file" accept="application/pdf" onChange={handleFileInput} />
+                    <input className={`${input} file:mr-3 file:rounded-md file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-white sm:file:text-sm`} type="file" accept="application/pdf" onChange={handleFileInput} />
                   </Field>
                   <Field label="Selected File">
-                    <input className={input} readOnly value={form.fileName || 'No file selected'} />
+                    <input className={`${input} truncate`} readOnly value={form.fileName || 'No file selected'} />
                   </Field>
                   <Field label="Note Cover Image">
-                    <input className={input} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleNoteImageInput} />
+                    <input className={`${input} file:mr-3 file:rounded-md file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-white sm:file:text-sm`} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleNoteImageInput} />
                   </Field>
                   <Field label="Selected Image">
-                    <input className={input} readOnly value={form.coverImageName || 'No image selected'} />
+                    <input className={`${input} truncate`} readOnly value={form.coverImageName || 'No image selected'} />
                   </Field>
                 </>
               )}
@@ -600,10 +604,10 @@ export default function AdminDashboard() {
                     <input className={input} value={form.author} onChange={(event) => setForm((current) => ({ ...current, author: event.target.value }))} placeholder="The Epoch Nova" />
                   </Field>
                   <Field label="PDF File">
-                    <input className={input} type="file" accept="application/pdf" onChange={handleFileInput} />
+                    <input className={`${input} file:mr-3 file:rounded-md file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-white sm:file:text-sm`} type="file" accept="application/pdf" onChange={handleFileInput} />
                   </Field>
                   <Field label="Selected File">
-                    <input className={input} readOnly value={form.fileName || 'No file selected'} />
+                    <input className={`${input} truncate`} readOnly value={form.fileName || 'No file selected'} />
                   </Field>
                 </>
               )}
@@ -621,45 +625,45 @@ export default function AdminDashboard() {
                   type="checkbox"
                   checked={Boolean(form.featured)}
                   onChange={(event) => setForm((current) => ({ ...current, featured: event.target.checked }))}
-                  className="h-4 w-4 rounded border-white/20 bg-white/5"
+                  className="h-4 w-4 shrink-0 rounded border-white/20 bg-white/5"
                 />
                 Featured content
               </label>
 
-              <div className="flex gap-3">
-                <button className={buttonPrimary} disabled={saving} type="submit">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button className={`${buttonPrimary} w-full justify-center sm:w-auto`} disabled={saving} type="submit">
                   {saving ? 'Saving...' : editingId ? 'Update Content' : 'Publish'}
                 </button>
-                <button type="button" className={buttonOutline} onClick={resetForm}>
+                <button type="button" className={`${buttonOutline} w-full justify-center sm:w-auto`} onClick={resetForm}>
                   Reset
                 </button>
               </div>
             </form>
 
-            <div className={glass}>
-              <div className="mb-5 flex items-center justify-between gap-3">
-                <h3 className="text-xl font-bold text-white">Manage {pageTitle}</h3>
-                <span className="text-sm text-neutral-400">{loading ? 'Loading...' : `${items.length} items`}</span>
+            <div className={`${glass} w-full max-w-full min-w-0 p-4 sm:p-5`}>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2 sm:mb-5 sm:gap-3">
+                <h3 className="text-lg font-bold text-white sm:text-xl">Manage {pageTitle}</h3>
+                <span className="text-xs text-neutral-400 sm:text-sm">{loading ? 'Loading...' : `${items.length} items`}</span>
               </div>
 
-              <div className="grid gap-3">
+              <div className="grid w-full max-w-full gap-3">
                 {items.map((item) => (
-                  <article key={item._id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-cyan-300/30">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0">
+                  <article key={item._id} className="w-full max-w-full min-w-0 rounded-xl border border-white/10 bg-white/[0.03] p-3.5 transition hover:border-cyan-300/30 sm:p-4">
+                    <div className="flex w-full max-w-full flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <strong className="block truncate text-white">{item.title}</strong>
-                          <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-xs text-cyan-300">{item.status || 'draft'}</span>
-                          {item.featured && <span className="rounded-full border border-violet-300/20 bg-violet-300/10 px-2 py-0.5 text-xs text-violet-300">featured</span>}
+                          <strong className="block min-w-0 truncate text-sm text-white sm:text-base">{item.title}</strong>
+                          <span className="shrink-0 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-[10px] text-cyan-300 sm:text-xs">{item.status || 'draft'}</span>
+                          {item.featured && <span className="shrink-0 rounded-full border border-violet-300/20 bg-violet-300/10 px-2 py-0.5 text-[10px] text-violet-300 sm:text-xs">featured</span>}
                         </div>
-                        <p className="mt-1 line-clamp-2 text-sm text-neutral-400">{item.description || 'No description provided.'}</p>
-                        <p className="mt-2 text-xs text-neutral-500">Category: {item.category || 'general'}</p>
+                        <p className="mt-1 line-clamp-2 text-xs text-neutral-400 sm:text-sm">{item.description || 'No description provided.'}</p>
+                        <p className="mt-2 text-[11px] text-neutral-500 sm:text-xs">Category: {item.category || 'general'}</p>
                       </div>
                       <div className="flex shrink-0 gap-2">
-                        <button type="button" className={buttonSecondary} onClick={() => startEdit(item)}>
+                        <button type="button" className={`${buttonSecondary} flex-1 justify-center text-sm lg:flex-none`} onClick={() => startEdit(item)}>
                           Edit
                         </button>
-                        <button type="button" className={`${buttonSecondary} border-red-400/20 text-red-200 hover:bg-red-500/10`} onClick={() => handleDelete(item)}>
+                        <button type="button" className={`${buttonSecondary} flex-1 justify-center border-red-400/20 text-sm text-red-200 hover:bg-red-500/10 lg:flex-none`} onClick={() => handleDelete(item)}>
                           Delete
                         </button>
                       </div>
@@ -667,7 +671,7 @@ export default function AdminDashboard() {
                   </article>
                 ))}
                 {!items.length && !loading && (
-                  <div className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-neutral-500">
+                  <div className="w-full max-w-full rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-neutral-500">
                     No content yet for this collection.
                   </div>
                 )}
@@ -676,6 +680,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

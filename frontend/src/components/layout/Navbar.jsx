@@ -32,12 +32,14 @@ function HeaderIcon({ name, className = 'h-5 w-5' }) {
 export default function Navbar({ active }) {
   const [open, setOpen] = useState(false);
   const auth = useAuth();
-  const links = [
-    { href: '/', label: 'Home', key: 'home' },
-    { href: '/tutorials', label: 'Tutorials', key: 'tutorials' },
-    { href: '/notes', label: 'Notes & PDFs', key: 'notes' },
-    { href: '/roadmaps', label: 'Roadmaps', key: 'roadmaps' },
-  ];
+  const links = auth?.token
+  ? [
+      { href: '/', label: 'Home', key: 'home' },
+      { href: '/tutorials', label: 'Tutorials', key: 'tutorials' },
+      { href: '/notes', label: 'Notes & PDFs', key: 'notes' },
+      { href: '/roadmaps', label: 'Roadmaps', key: 'roadmaps' },
+    ]
+  : [];
 
   const closeMenu = () => setOpen(false);
 
@@ -58,20 +60,28 @@ export default function Navbar({ active }) {
         </Link>
 
         <nav className="hidden items-center gap-8 lg:flex" aria-label="Primary navigation">
-          {links.map((link) => {
-            const isActive = active === link.key;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`relative inline-flex h-10 items-center gap-2 text-sm font-medium tracking-wide transition after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:bg-gradient-to-r after:from-cyan-300 after:to-violet-500 after:transition-transform ${isActive ? 'text-white after:scale-x-100' : 'text-slate-300 after:scale-x-0 hover:text-white hover:after:scale-x-100'}`}
-              >
-                {link.key === 'home' && <HeaderIcon name="home" className="h-5 w-5" />}
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+  {links.map((link) => {
+    const isActive = active === link.key;
+
+    return (
+      <Link
+        key={link.href}
+        href={link.href}
+        className={`relative inline-flex h-10 items-center gap-2 text-sm font-medium tracking-wide transition after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-left after:bg-gradient-to-r after:from-cyan-300 after:to-violet-500 after:transition-transform ${
+          isActive
+            ? 'text-white after:scale-x-100'
+            : 'text-slate-300 after:scale-x-0 hover:text-white hover:after:scale-x-100'
+        }`}
+      >
+        {link.key === 'home' && (
+          <HeaderIcon name="home" className="h-5 w-5" />
+        )}
+
+        {link.label}
+      </Link>
+    );
+  })}
+</nav>
 
         <div className="hidden min-w-max items-center gap-3 lg:flex">
           {auth?.token ? (
@@ -125,18 +135,24 @@ export default function Navbar({ active }) {
 
       {open && (
         <div className="border-t border-white/10 bg-[#050b13] px-6 pb-6 lg:hidden">
-          <nav className="grid gap-2 py-4" aria-label="Mobile navigation">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded-[10px] px-4 py-3 text-base font-black transition ${active === link.key ? 'bg-white/10 text-white' : 'text-slate-300 hover:bg-white/8 hover:text-white'}`}
-                onClick={closeMenu}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+           {auth?.token && (
+              <nav className="grid gap-2 py-4" aria-label="Mobile navigation">
+                {links.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`rounded-[10px] px-4 py-3 text-base font-black transition ${
+                      active === link.key
+                        ? 'bg-white/10 text-white'
+                        : 'text-slate-300 hover:bg-white/8 hover:text-white'
+                    }`}
+                    onClick={closeMenu}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            )}
           <div className="grid gap-3 sm:grid-cols-2">
             {auth?.token ? (
               <>

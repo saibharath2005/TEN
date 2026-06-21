@@ -4,7 +4,38 @@ import User from '../models/User.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
-const savedSelect = 'type title category description excerpt duration minutes pages resourceType level status author instructor readTime slug createdAt updatedAt featured steps outcomes';
+const savedSelect = `
+type
+title
+category
+description
+excerpt
+duration
+minutes
+pages
+resourceType
+level
+status
+author
+instructor
+readTime
+slug
+createdAt
+updatedAt
+featured
+steps
+outcomes
+videoUrl
+fileUrl
+fileData
+mimeType
+imageUrl
+imageData
+coverImageUrl
+coverImageData
+lessons
+modules
+`;
 
 function publicUser(user) {
   return {
@@ -179,7 +210,8 @@ router.post('/dashboard/saved-items', requireAuth, async (req, res, next) => {
 
     const refreshed = await loadDashboardUser(req.user._id);
     const savedItems = Array.isArray(refreshed?.savedItems) ? refreshed.savedItems : [];
-
+    const savedByType = splitSavedItems(savedItems);
+    
     res.json({
       saved: !saved,
       item: content,
