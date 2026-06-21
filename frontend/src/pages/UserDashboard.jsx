@@ -14,6 +14,12 @@ const sidebarItems = [
   { id: 'profile', label: 'Profile' },
 ];
 
+const KIND_META = {
+  tutorial: { label: 'Tutorial', icon: 'bookmark', tone: 'from-violet-500/30 to-fuchsia-500/10 text-violet-300', bar: 'from-violet-400 to-fuchsia-500' },
+  roadmap: { label: 'Roadmap', icon: 'layout', tone: 'from-cyan-400/30 to-blue-500/10 text-cyan-300', bar: 'from-cyan-300 to-blue-500' },
+  note: { label: 'PDF', icon: 'file', tone: 'from-emerald-400/30 to-teal-500/10 text-emerald-300', bar: 'from-emerald-300 to-teal-500' },
+};
+
 function Icon({ name, className = 'h-5 w-5' }) {
   const common = {
     className,
@@ -38,58 +44,164 @@ function Icon({ name, className = 'h-5 w-5' }) {
   return icons[name] || icons.layout;
 }
 
-function InfoLine({ label, value }) {
+function DotGrid({ opacity = 0.08 }) {
   return (
-    <div className="rounded-[10px] border border-white/10 bg-white/[0.03] px-4 py-3">
-      <span className="block text-[11px] uppercase tracking-[0.18em] text-slate-500">{label}</span>
-      <strong className="mt-1 block text-sm font-semibold text-white">{value || '-'}</strong>
-    </div>
+    <div
+      className="pointer-events-none absolute inset-0"
+      style={{
+        opacity,
+        backgroundImage: 'radial-gradient(rgba(255,255,255,0.8) 1px, transparent 1px)',
+        backgroundSize: '20px 20px',
+      }}
+    />
   );
 }
 
-function SavedRow({ kind, item, onOpen, savedOn }) {
+function TabNav({ active, onChange }) {
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex w-full items-center gap-4 rounded-[10px] border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition hover:border-cyan-300/30 hover:bg-white/[0.06]"
-    >
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-violet-500/20 to-cyan-500/10 text-violet-300">
-        <Icon name={kind === 'tutorial' ? 'bookmark' : 'file'} className="h-5 w-5" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <span className="mb-1 block text-[11px] uppercase tracking-[0.2em] text-violet-300">
-          {kind === 'tutorial' ? 'Tutorial' : kind === 'roadmap' ? 'Roadmap' : 'PDF'}
-        </span>
-        <strong className="block truncate text-sm text-white">{item.title}</strong>
-        <p className="mt-1 truncate text-xs leading-5 text-slate-400">{item.description || item.desc || 'Saved content'}</p>
-      </div>
-      <div className="shrink-0 text-right text-[11px] text-slate-400">
-        <span className="block">Saved on</span>
-        <span className="block text-slate-300">{savedOn}</span>
-      </div>
-      <Icon name="chevronRight" className="h-4 w-4 text-slate-500" />
-    </button>
+    <nav className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {sidebarItems.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => onChange(item.id)}
+          className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-2 font-mono text-[11px] uppercase tracking-[0.12em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 ${
+            active === item.id
+              ? 'border-transparent bg-gradient-to-r from-cyan-300 to-violet-500 text-slate-950 shadow-[0_8px_20px_-8px_rgba(34,211,238,0.6)]'
+              : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.06] hover:text-white'
+          }`}
+        >
+          {item.label}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function ListPanel({ title, subtitle, items, kind, onOpen, onViewAll }) {
+  const meta = KIND_META[kind] || KIND_META.note;
+  const emptyLabel = kind === 'tutorial' ? 'tutorials' : kind === 'roadmap' ? 'roadmaps' : 'notes';
+
+  return (
+    <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#070b12]/90 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
+      <header className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
+        <div className="min-w-0">
+          <h2 className="truncate text-base font-bold text-white">{title}</h2>
+          {subtitle ? <p className="mt-0.5 truncate font-mono text-[10px] uppercase tracking-[0.1em] text-slate-500">{subtitle}</p> : null}
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <span className="font-mono text-[11px] text-slate-500">{items.length} saved</span>
+          {onViewAll ? (
+            <button
+              type="button"
+              onClick={onViewAll}
+              className="rounded font-mono text-[11px] uppercase tracking-[0.1em] text-violet-300 transition-colors duration-200 hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50"
+            >
+              View all
+            </button>
+          ) : null}
+        </div>
+      </header>
+
+      {items.length ? (
+        <div className="divide-y divide-white/5">
+          {items.map((item) => (
+            <button
+              key={item._id}
+              type="button"
+              onClick={onOpen}
+              className="group flex w-full min-w-0 items-center gap-4 px-5 py-3.5 text-left transition-colors duration-200 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:bg-white/[0.04]"
+            >
+              <span className={`h-9 w-1 shrink-0 rounded-full bg-gradient-to-b ${meta.bar}`} />
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${meta.tone}`}>
+                <Icon name={meta.icon} className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <strong className="block truncate text-sm font-semibold text-white">{item.title}</strong>
+                <span className="mt-0.5 block truncate text-xs text-slate-400">{item.description || item.desc || 'Saved content'}</span>
+              </span>
+              <span className="hidden shrink-0 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-slate-400 sm:inline-block">
+                {meta.label}
+              </span>
+              <Icon name="chevronRight" className="h-4 w-4 shrink-0 text-slate-600 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-cyan-300" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="px-5 py-10 text-center">
+          <p className="text-sm text-slate-400">{`No saved ${emptyLabel} yet.`}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ProfileDossier({ initial, profileName, roleLabel, profileEmail, memberSince, lastLogin, savedTutorialsCount, savedNotesCount, savedRoadmapCount, totalSavedCount }) {
+  const rows = [
+    { label: 'Full name', value: profileName },
+    { label: 'Email address', value: profileEmail },
+    { label: 'Role', value: roleLabel },
+    { label: 'Member since', value: memberSince },
+    { label: 'Last login', value: lastLogin },
+    { label: 'Saved tutorials', value: savedTutorialsCount },
+    { label: 'Saved notes', value: savedNotesCount },
+    { label: 'Saved roadmaps', value: savedRoadmapCount },
+    { label: 'Total saved items', value: totalSavedCount },
+  ];
+
+  return (
+    <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-[#070b12]/90 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
+      <header className="flex flex-col gap-4 border-b border-white/10 p-6 sm:flex-row sm:items-center">
+        <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-400 text-2xl font-black text-white">
+          {initial}
+        </div>
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-black text-white">{profileName}</h2>
+          <p className="mt-1 font-mono text-xs uppercase tracking-[0.16em] text-cyan-300/80">{roleLabel}</p>
+        </div>
+      </header>
+      <dl className="divide-y divide-white/5">
+        {rows.map((row) => (
+          <div key={row.label} className="flex items-center justify-between gap-4 px-6 py-3.5">
+            <dt className="shrink-0 font-mono text-[11px] uppercase tracking-[0.12em] text-slate-500">{row.label}</dt>
+            <dd className="min-w-0 truncate break-words text-right text-sm font-semibold text-white">{row.value || '-'}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
 function AccessPrompt() {
   return (
-    <div className="relative min-h-[calc(100vh-72px)] bg-[#050b13] pt-[88px] text-white">
+    <div className="relative min-h-[calc(100vh-72px)] overflow-x-hidden bg-[#050b13] pt-[88px] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.08),transparent_26%),radial-gradient(circle_at_80%_15%,rgba(124,58,237,0.10),transparent_24%),linear-gradient(180deg,#050b13_0%,#04070d_100%)]" />
-      <div className={`${shell} relative flex min-h-[calc(100vh-160px)] items-center justify-center`}>
-        <div className="w-full max-w-xl rounded-[12px] border border-white/10 bg-[#070b12]/95 p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
-          <h1 className="text-3xl font-black text-white">Dashboard Access</h1>
-          <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-400">
-            Login to view your saved tutorials, notes, and roadmap overview.
-          </p>
-          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/login" className="inline-flex h-11 items-center justify-center rounded-[9px] border border-cyan-300/60 px-5 text-sm font-medium text-white">
-              Login
-            </Link>
-            <Link href="/signup" className="inline-flex h-11 items-center justify-center rounded-[9px] bg-gradient-to-r from-cyan-300 to-violet-500 px-5 text-sm font-medium text-slate-950">
-              Sign Up
-            </Link>
+      <div className={`${shell} relative flex min-h-[calc(100vh-160px)] items-center justify-center px-4`}>
+        <div className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[#070b12]/95 p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.5)] sm:p-8">
+          <DotGrid opacity={0.06} />
+          <div className="relative">
+            <div className="mx-auto mb-5 grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-cyan-300/20 to-violet-500/20 text-cyan-300">
+              <Icon name="user" className="h-6 w-6" />
+            </div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-cyan-300/80">Learning hub</p>
+            <h1 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">Dashboard Access</h1>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-400">
+              Login to view your saved tutorials, notes, and roadmap overview.
+            </p>
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link
+                href="/login"
+                className="inline-flex h-11 items-center justify-center rounded-[9px] border border-cyan-300/60 px-5 text-sm font-medium text-white transition-colors duration-200 hover:bg-cyan-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex h-11 items-center justify-center rounded-[9px] bg-gradient-to-r from-cyan-300 to-violet-500 px-5 text-sm font-medium text-slate-950 transition-opacity duration-200 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50"
+              >
+                Sign Up
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -146,170 +258,105 @@ export default function UserDashboard() {
   }
 
   const stats = [
-    { label: 'Available Tutorials', value: summary?.available?.tutorials ?? 0 },
-    { label: 'Available Notes', value: summary?.available?.notes ?? 0 },
-    { label: 'Saved Roadmaps', value: savedRoadmapCount },
-    { label: 'Saved Items', value: totalSavedCount },
+    { label: 'Available Tutorials', value: summary?.available?.tutorials ?? 0, tone: 'text-violet-300' },
+    { label: 'Available Notes', value: summary?.available?.notes ?? 0, tone: 'text-emerald-300' },
+    { label: 'Saved Roadmaps', value: savedRoadmapCount, tone: 'text-cyan-300' },
+    { label: 'Saved Items', value: totalSavedCount, tone: 'text-amber-300' },
   ];
 
   return (
-    <div className="relative min-h-screen bg-[#050b13] pt-[88px] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_28%),radial-gradient(circle_at_80%_20%,rgba(124,58,237,0.10),transparent_26%),linear-gradient(180deg,#050b13_0%,#04070d_100%)]" />
-      <div className={`${shell} relative grid gap-6 pb-8 xl:grid-cols-[220px_minmax(0,1fr)_280px]`}>
-        <aside className="rounded-[10px] border border-white/10 bg-[#070b12]/90 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-[12px] bg-cyan-300/10 text-cyan-300">
-              <Icon name="layout" className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-slate-500">Dashboard</p>
-              <h2 className="text-base font-black text-white">Learning Hub</h2>
-            </div>
-          </div>
+    <div className="relative min-h-screen overflow-x-hidden bg-[#050b13] pt-[88px] text-white selection:bg-cyan-300/20 selection:text-cyan-100">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(34,211,238,0.10),transparent_32%),radial-gradient(circle_at_85%_10%,rgba(139,92,246,0.12),transparent_30%),linear-gradient(180deg,#050b13_0%,#04070d_100%)]" />
 
-          <div className="space-y-2">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSection(item.id)}
-                className={`flex w-full items-center gap-3 rounded-[10px] border px-4 py-3 text-left text-sm font-semibold transition ${section === item.id ? 'border-cyan-300/20 bg-white/10 text-white' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10 hover:text-white'}`}
-              >
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        <main className="min-w-0 space-y-6">
-          <section className="rounded-[10px] border border-white/10 bg-[#070b12]/90 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h1 className="text-2xl font-black text-white">Welcome Back, {profileName}</h1>
-                <p className="mt-1 text-sm text-slate-400">Continue learning and grow your skills.</p>
+      <div className={`${shell} relative space-y-6 pb-14 pt-2`}>
+        {/* Hero */}
+        <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#070b12]/90 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
+          <DotGrid />
+          <div className="relative flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-400 text-xl font-black text-white shadow-[0_8px_24px_-8px_rgba(34,211,238,0.6)] sm:h-16 sm:w-16 sm:text-2xl">
+                {initial}
+              </div>
+              <div className="min-w-0">
+                <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-cyan-300/80">Welcome back</p>
+                <h1 className="truncate text-2xl font-black tracking-tight text-white sm:text-3xl">{profileName}</h1>
+                <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-mono text-[11px] text-slate-300">
+                    <Icon name="user" className="h-3 w-3" /> {roleLabel}
+                  </span>
+                </p>
               </div>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-4 lg:w-auto lg:shrink-0">
               {stats.map((stat) => (
-                <div key={stat.label} className="rounded-[10px] border border-white/10 bg-white/[0.03] p-4">
-                  <strong className="block text-2xl font-black text-white">{stat.value}</strong>
-                  <span className="text-xs text-slate-400">{stat.label}</span>
+                <div key={stat.label} className="min-w-0 bg-[#070b12] px-4 py-3 sm:px-5">
+                  <p className="truncate font-mono text-[10px] uppercase tracking-[0.16em] text-slate-500">{stat.label}</p>
+                  <p className={`mt-1 truncate font-mono text-2xl font-bold tabular-nums ${stat.tone}`}>{stat.value}</p>
                 </div>
               ))}
             </div>
-          </section>
-
-          {section === 'overview' && (
-            <section className="grid gap-6 xl:grid-cols-3">
-              <article className="rounded-[10px] border border-white/10 bg-[#070b12]/90 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-black text-white">Recently Saved Tutorials</h2>
-                    <p className="mt-1 text-xs text-slate-400">Items saved from the tutorials page</p>
-                  </div>
-                  <button type="button" onClick={() => navigate('/tutorials')} className="text-sm font-medium text-violet-300 transition hover:text-cyan-300">
-                    View All
-                  </button>
-                </div>
-                <div className="grid gap-3">
-                  {savedTutorials.length ? savedTutorials.map((item) => <SavedRow key={item._id} kind="tutorial" item={item} savedOn="Recently" onOpen={() => navigate('/tutorials')} />) : <EmptyState label="No saved tutorials yet." />}
-                </div>
-              </article>
-
-              <article className="rounded-[10px] border border-white/10 bg-[#070b12]/90 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-black text-white">Recently Saved Notes &amp; PDFs</h2>
-                    <p className="mt-1 text-xs text-slate-400">Items saved from the notes page</p>
-                  </div>
-                  <button type="button" onClick={() => navigate('/notes')} className="text-sm font-medium text-violet-300 transition hover:text-cyan-300">
-                    View All
-                  </button>
-                </div>
-                <div className="grid gap-3">
-                  {savedNotes.length ? savedNotes.map((item) => <SavedRow key={item._id} kind="note" item={item} savedOn="Recently" onOpen={() => navigate('/notes')} />) : <EmptyState label="No saved notes yet." />}
-                </div>
-              </article>
-
-              <article className="rounded-[10px] border border-white/10 bg-[#070b12]/90 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-black text-white">Recently Saved Roadmaps</h2>
-                    <p className="mt-1 text-xs text-slate-400">Items saved from the roadmaps page</p>
-                  </div>
-                  <button type="button" onClick={() => navigate('/roadmaps')} className="text-sm font-medium text-violet-300 transition hover:text-cyan-300">
-                    View All
-                  </button>
-                </div>
-                <div className="grid gap-3">
-                  {savedRoadmaps.length ? savedRoadmaps.map((item) => <SavedRow key={item._id} kind="roadmap" item={item} savedOn="Recently" onOpen={() => navigate('/roadmaps')} />) : <EmptyState label="No saved roadmaps yet." />}
-                </div>
-              </article>
-            </section>
-          )}
-
-          {section === 'tutorials' && <SavedSection title="Saved Tutorials" items={savedTutorials} onOpen={() => navigate('/tutorials')} kind="tutorial" />}
-          {section === 'notes' && <SavedSection title="Saved Notes &amp; PDFs" items={savedNotes} onOpen={() => navigate('/notes')} kind="note" />}
-          {section === 'roadmaps' && <SavedSection title="Saved Roadmaps" items={savedRoadmaps} onOpen={() => navigate('/roadmaps')} kind="roadmap" />}
-
-          {section === 'profile' && (
-            <section className="rounded-[10px] border border-white/10 bg-[#070b12]/90 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
-              <h2 className="mb-4 text-lg font-black text-white">Profile Overview</h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                <InfoLine label="Full Name" value={profileName} />
-                <InfoLine label="Email Address" value={profileEmail} />
-                <InfoLine label="Member Since" value={memberSince} />
-                <InfoLine label="Last Login" value={lastLogin} />
-                <InfoLine label="Role" value={roleLabel} />
-                <InfoLine label="Saved Items" value={totalSavedCount} />
-                <InfoLine label="Saved Roadmaps" value={savedRoadmapCount} />
-              </div>
-            </section>
-          )}
-        </main>
-
-        <aside className="rounded-[10px] border border-white/10 bg-[#070b12]/90 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
-          <div className="text-center">
-            <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-400 text-4xl font-black text-white">
-              {initial}
-            </div>
-            <h2 className="mt-4 text-xl font-black text-white">{profileName}</h2>
-            <p className="mt-1 text-sm text-cyan-300">{roleLabel}</p>
           </div>
+        </section>
 
-          <div className="mt-6 space-y-4">
-            <InfoLine label="Email Address" value={profileEmail} />
-            <InfoLine label="Member Since" value={memberSince} />
-            <InfoLine label="Last Login" value={lastLogin} />
-            <InfoLine label="Saved Tutorials" value={savedTutorials.length} />
-            <InfoLine label="Saved Notes" value={savedNotes.length} />
-            <InfoLine label="Saved Roadmaps" value={savedRoadmapCount} />
+        {/* Tab navigation */}
+        <TabNav active={section} onChange={setSection} />
+
+        {/* Content */}
+        {section === 'overview' && (
+          <div className="grid gap-6 xl:grid-cols-3">
+            <ListPanel
+              title="Recently Saved Tutorials"
+              subtitle="From the tutorials page"
+              items={savedTutorials}
+              kind="tutorial"
+              onOpen={() => navigate('/tutorials')}
+              onViewAll={() => navigate('/tutorials')}
+            />
+            <ListPanel
+              title="Recently Saved Notes & PDFs"
+              subtitle="From the notes page"
+              items={savedNotes}
+              kind="note"
+              onOpen={() => navigate('/notes')}
+              onViewAll={() => navigate('/notes')}
+            />
+            <ListPanel
+              title="Recently Saved Roadmaps"
+              subtitle="From the roadmaps page"
+              items={savedRoadmaps}
+              kind="roadmap"
+              onOpen={() => navigate('/roadmaps')}
+              onViewAll={() => navigate('/roadmaps')}
+            />
           </div>
-        </aside>
+        )}
+
+        {section === 'tutorials' && (
+          <ListPanel title="Saved Tutorials" items={savedTutorials} kind="tutorial" onOpen={() => navigate('/tutorials')} />
+        )}
+        {section === 'notes' && (
+          <ListPanel title="Saved Notes & PDFs" items={savedNotes} kind="note" onOpen={() => navigate('/notes')} />
+        )}
+        {section === 'roadmaps' && (
+          <ListPanel title="Saved Roadmaps" items={savedRoadmaps} kind="roadmap" onOpen={() => navigate('/roadmaps')} />
+        )}
+
+        {section === 'profile' && (
+          <ProfileDossier
+            initial={initial}
+            profileName={profileName}
+            roleLabel={roleLabel}
+            profileEmail={profileEmail}
+            memberSince={memberSince}
+            lastLogin={lastLogin}
+            savedTutorialsCount={savedTutorials.length}
+            savedNotesCount={savedNotes.length}
+            savedRoadmapCount={savedRoadmapCount}
+            totalSavedCount={totalSavedCount}
+          />
+        )}
       </div>
     </div>
-  );
-}
-
-function EmptyState({ label }) {
-  return (
-    <div className="rounded-[10px] border border-dashed border-white/10 bg-white/[0.02] p-6 text-center text-sm text-slate-400">
-      {label}
-    </div>
-  );
-}
-
-function SavedSection({ title, items, kind, onOpen }) {
-  return (
-    <section className="rounded-[10px] border border-white/10 bg-[#070b12]/90 p-5 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <h2 className="text-lg font-black text-white">{title}</h2>
-        <span className="text-sm text-slate-400">{items.length} saved</span>
-      </div>
-      <div className="grid gap-3">
-        {items.length ? items.map((item) => <SavedRow key={item._id} kind={kind} item={item} savedOn="Recently" onOpen={onOpen} />) : <EmptyState label={`No saved ${kind === 'tutorial' ? 'tutorials' : kind === 'roadmap' ? 'roadmaps' : 'notes'} yet.`} />}
-      </div>
-    </section>
   );
 }

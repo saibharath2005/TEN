@@ -149,7 +149,7 @@ export default function Roadmaps() {
 
       <section className="relative mx-auto w-full max-w-6xl px-5 pb-10 pt-2 sm:px-6 lg:px-8">
         {filtered.length ? (
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid items-stretch gap-5 lg:grid-cols-3">
             {filtered.map((roadmap) => (
               <RoadmapCard
                 key={roadmap.id}
@@ -222,6 +222,7 @@ function RoadmapCard({ roadmap, saved, onToggleSave, onOpen }) {
     violet: {
       card: 'border-violet-500/35 hover:border-violet-400/70',
       icon: 'bg-violet-600 text-white',
+      glow: 'bg-violet-500',
       line: 'border-violet-500/45',
       dot: 'bg-violet-500',
       label: 'text-violet-300',
@@ -230,6 +231,7 @@ function RoadmapCard({ roadmap, saved, onToggleSave, onOpen }) {
     cyan: {
       card: 'border-cyan-500/35 hover:border-cyan-300/70',
       icon: 'bg-cyan-500/35 text-cyan-100',
+      glow: 'bg-cyan-400',
       line: 'border-cyan-500/45',
       dot: 'bg-cyan-500',
       label: 'text-cyan-300',
@@ -238,6 +240,7 @@ function RoadmapCard({ roadmap, saved, onToggleSave, onOpen }) {
     blue: {
       card: 'border-blue-500/35 hover:border-blue-300/70',
       icon: 'bg-blue-500/35 text-blue-100',
+      glow: 'bg-blue-400',
       line: 'border-blue-500/45',
       dot: 'bg-blue-500',
       label: 'text-blue-300',
@@ -246,6 +249,7 @@ function RoadmapCard({ roadmap, saved, onToggleSave, onOpen }) {
     emerald: {
       card: 'border-emerald-500/35 hover:border-emerald-300/70',
       icon: 'bg-emerald-500/25 text-emerald-100',
+      glow: 'bg-emerald-400',
       line: 'border-emerald-500/45',
       dot: 'bg-emerald-500',
       label: 'text-emerald-300',
@@ -255,55 +259,57 @@ function RoadmapCard({ roadmap, saved, onToggleSave, onOpen }) {
   const tone = tones[roadmap.tone] || tones.violet;
 
   return (
-    <article className={`overflow-hidden rounded-[8px] border bg-[#0b1226]/84 shadow-2xl shadow-black/30 transition duration-300 hover:-translate-y-1 ${tone.card}`}>
-      <div className="relative border-b border-white/8 bg-white/[0.015] p-5">
+    <article className={`group flex h-full flex-col overflow-hidden rounded-[10px] border bg-[#0b1226]/84 shadow-[0_14px_38px_-18px_rgba(0,0,0,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_46px_-16px_rgba(0,0,0,0.75)] ${tone.card}`}>
+      <div className="relative overflow-hidden border-b border-white/8 bg-gradient-to-br from-white/[0.04] to-transparent p-4">
+        <div className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full ${tone.glow} opacity-50 blur-3xl`} />
         <button
           type="button"
           aria-label={saved ? 'Remove saved roadmap' : 'Save roadmap'}
           onClick={() => onToggleSave(roadmapKey)}
-          className={`absolute right-5 top-5 grid h-9 w-9 place-items-center rounded-[7px] border transition ${saved ? 'border-violet-300 bg-violet-500/20 text-violet-100' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10'}`}
+          className={`absolute right-4 top-4 z-10 grid h-8 w-8 shrink-0 place-items-center rounded-[7px] border transition ${saved ? 'border-violet-300 bg-violet-500/20 text-violet-100' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/10'}`}
         >
-          <Icon name="bookmark" className={`h-4 w-4 ${saved ? 'fill-current' : ''}`} />
+          <Icon name="bookmark" className={`h-3.5 w-3.5 ${saved ? 'fill-current' : ''}`} />
         </button>
-        <div className="flex items-start gap-4 pr-12">
-          <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-[8px] text-lg font-black ${tone.icon}`}>{roadmap.icon}</span>
-          <div>
-            <h2 className="text-lg font-black text-white">{roadmap.title}</h2>
-            <span className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${tone.badge}`}>{roadmap.tag}</span>
-            <p className="mt-3 text-sm leading-6 text-slate-300">{roadmap.desc}</p>
+        <div className="relative flex items-start gap-3 pr-11">
+          <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-[8px] ring-1 ring-white/10 ${tone.icon}`}>
+            <Icon name={roadmap.icon} className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-black text-white" title={roadmap.title}>{roadmap.title}</h2>
+            <span className={`mt-1 inline-flex max-w-full truncate rounded-full px-2 py-0.5 text-[10px] font-bold ${tone.badge}`}>{roadmap.tag}</span>
           </div>
         </div>
+        <p className="relative mt-3 line-clamp-2 text-xs leading-5 text-slate-300">{roadmap.desc}</p>
       </div>
 
-      <div className="grid gap-5 p-5 md:grid-cols-[1fr_145px]">
-        <div>
-          <div className={`mb-4 flex items-center gap-2 text-xs font-black uppercase ${tone.label}`}>
-            <Icon name="check" className="h-4 w-4" /> Roadmap Overview
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex items-center gap-3 text-[11px] font-bold text-slate-300">
+          <span className="inline-flex items-center gap-1.5"><Icon name="clock" className={`h-3.5 w-3.5 ${tone.label}`} />{roadmap.duration}</span>
+          <span className="h-3 w-px bg-white/10" />
+          <span className="inline-flex items-center gap-1.5"><Icon name="modules" className={`h-3.5 w-3.5 ${tone.label}`} />{roadmap.modules} Modules</span>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className={`mb-3 flex items-center gap-2 text-[11px] font-black uppercase tracking-wide ${tone.label}`}>
+            <Icon name="check" className="h-3.5 w-3.5" /> Overview
           </div>
-          <div className={`relative space-y-3 border-l pl-5 ${tone.line}`}>
-            {roadmap.steps.map((step, index) => (
-              <div key={step} className="relative">
-                <span className={`absolute -left-[29px] top-0 grid h-5 w-5 place-items-center rounded-full text-[10px] font-black text-white ${tone.dot}`}>{index + 1}</span>
-                <h3 className="text-sm font-bold text-white">Phase {index + 1}</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-400">{step}</p>
+          <div className={`relative max-h-[148px] space-y-3 overflow-y-auto border-0 pl-7 pr-1 scroll-smooth scrollbar-hide ${tone.line}`}>
+  {roadmap.steps.map((step, index) => (
+    <div key={step} className="relative min-w-0">
+      <span className={`absolute -left-[27px] top-0 grid h-4 w-4 shrink-0 place-items-center rounded-full text-[9px] font-black text-white ${tone.dot}`}>{index + 1}</span>
+                <h3 className="text-xs font-bold text-white">Phase {index + 1}</h3>
+                <p className="mt-0.5 break-words text-[11px] leading-4 text-slate-400">{step}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="grid content-start gap-4">
-          <Metric icon="clock" label="Duration" value={roadmap.duration} tone={roadmap.tone} />
-          <Metric icon="modules" label="Modules" value={roadmap.modules} tone={roadmap.tone} />
-        </div>
-      </div>
-
-      <div className="px-5 pb-5">
         <button
           type="button"
           onClick={() => onOpen(roadmap)}
-          className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[7px] bg-gradient-to-r from-sky-400 to-violet-600 px-4 text-sm font-black text-white shadow-lg shadow-violet-950/35 transition hover:-translate-y-0.5"
+          className="mt-auto inline-flex h-9 w-full items-center justify-center gap-2 rounded-[7px] bg-gradient-to-r from-sky-400 to-violet-600 px-4 text-xs font-black text-white shadow-lg shadow-violet-950/35 transition duration-300 hover:-translate-y-0.5 hover:shadow-violet-900/50"
         >
-          View Full Roadmap <Icon name="arrow" className="h-4 w-4" />
+          View Full Roadmap <Icon name="arrow" className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
         </button>
       </div>
     </article>
@@ -319,11 +325,11 @@ function Metric({ icon, label, value, tone }) {
   };
 
   return (
-    <div className="rounded-[8px] border border-white/10 bg-white/[0.035] p-4">
+    <div className="min-w-0 rounded-[8px] border border-white/10 bg-white/[0.035] p-4">
       <div className={`mb-2 flex items-center gap-2 text-xs font-bold ${colors[tone] || colors.violet}`}>
-        <Icon name={icon} className="h-4 w-4" /> {label}
+        <Icon name={icon} className="h-4 w-4 shrink-0" /> <span className="truncate">{label}</span>
       </div>
-      <div className="text-sm font-bold text-white">{value}</div>
+      <div className="truncate text-sm font-bold text-white" title={String(value)}>{value}</div>
     </div>
   );
 }
@@ -392,9 +398,3 @@ function RoadmapModal({ roadmap, saved, onClose, onToggleSave }) {
     </div>
   );
 }
-
-
-
-
-
-

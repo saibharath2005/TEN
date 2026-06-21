@@ -190,7 +190,7 @@ export default function Notes() {
 
         {loading && <p className="mb-4 text-sm text-slate-400">Refreshing library...</p>}
         {filtered.length ? (
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((note) => (
               <NoteCard key={note._id} item={note} />
             ))}
@@ -243,7 +243,3 @@ function LibraryFeature({ icon, title, text, tone }) {
     </div>
   );
 }
-
-
-
-
