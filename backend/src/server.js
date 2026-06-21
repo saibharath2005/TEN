@@ -22,7 +22,7 @@ process.on('uncaughtException', (error) => {
 });
 
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://127.0.0.1:5173', credentials: true }));
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '5mb' }));
 
 app.get('/api', (_req, res) => {
   res.json({ status: 'ok', service: 'the-epoch-nova-api', version: '1.0.0' });
